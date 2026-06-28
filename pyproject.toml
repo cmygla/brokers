@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "brokers"
+version = "0.1.0"
+description = ""
+authors = ["Ek.Kravchenko <EkViKravchenko@rosatom.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+httpx = "^0.28.1"
+pytest = "^9.1.1"
+kafka-python = "^3.0.2"
+retrying = "^1.4.2"
+pydantic = "^2.13.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
