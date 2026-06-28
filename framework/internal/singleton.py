@@ -6,13 +6,13 @@ from typing import (
 
 
 class Singleton:
-    _instance: Any | None = None
-    _lock: threading.Lock = threading.Lock()
+    """Базовый класс для реализации паттерна Singleton"""
+    _instance = None
+    _lock = threading.Lock()
 
     def __new__(cls, *args, **kwargs) -> 'Singleton':
         if cls._instance is None:
             with cls._lock:
-                # Двойная проверка блокировки (Double-Checked Locking)
                 if cls._instance is None:
-                    cls._instance = super().__new__(cls, *args, **kwargs)
+                    cls._instance = super().__new__(cls)
         return cls._instance
