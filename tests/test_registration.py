@@ -1,26 +1,23 @@
 import time
-import uuid
 
+from framework.internal.kafka.producer import Producer
+from helpers.kafka.consumer.register_events import RegisterEventsSubscriber
 from framework.internal.http.mail import MailApi
 from framework.internal.http.register import AccountApi
-from framework.internal.kafka.producer import Producer
 
 
-def test_failed_registration(account: AccountApi, mail: MailApi) -> None:
-    expected_mail = "string1@mail.ru"
-    account.register_user(login="string", email=expected_mail, password="string")
+def test_success_registration(
+        register_message,
+        account: AccountApi,
+        mail: MailApi, ) -> None:
+    """
+    Тест успешной регистрации с проверкой почты
+    """
+    message = register_message()
+    login = message["login"]
+    account.register_user(**message)
     for _ in range(10):
-        response = mail.find_message(query=expected_mail)
-        if response.json()["total"] > 0:
-            raise AssertionError("Email not found")
-        time.sleep(1)
-
-
-def test_success_registration(account: AccountApi, mail: MailApi) -> None:
-    base = uuid.uuid4().hex
-    account.register_user(login=base, email=f"{base}@mail.ru", password="123123123")
-    for _ in range(10):
-        response = mail.find_message(query=base)
+        response = mail.find_message(query=login)
         if response.json()["total"] > 0:
             break
         time.sleep(1)
@@ -28,19 +25,44 @@ def test_success_registration(account: AccountApi, mail: MailApi) -> None:
         raise AssertionError("Email not found")
 
 
-def test_success_registration_with_kafka_producer(kafka_producer: Producer, mail: MailApi):
-    base = uuid.uuid4().hex
-    message = {
-        "login": base,
-        "email": f"{base}@mail.ru",
-        "password": "123123123", }
+def test_success_registration_with_kafka_producer(
+        register_message,
+        kafka_producer: Producer,
+        mail: MailApi, ) -> None:
+    """
+    Тест регистрации с отправкой события через Kafka Producer
+    """
+    message = register_message()
+    login = message["login"]
+    kafka_producer.send(topic="register-events", message=message)
 
-    kafka_producer.send("register-events", message)
     for _ in range(10):
-        response = mail.find_message(query=base)
+        response = mail.find_message(query=login)
         if response.json()["total"] > 0:
             break
         time.sleep(1)
     else:
         raise AssertionError("Email not found")
 
+
+def test_success_registration_with_kafka_producer_consumer(
+        register_message,
+        register_events_subscriber: RegisterEventsSubscriber,
+        kafka_producer: Producer,
+        mail: MailApi
+) -> None:
+    """
+    Тест регистрации с использованием Kafka Producer и Consumer
+    """
+    message = register_message()
+    login = message["login"]
+    kafka_producer.send(topic="register-events", message=message)
+    register_events_subscriber.find_message(login=login)
+
+    for _ in range(10):
+        response = mail.find_message(query=login)
+        if response.json()["total"] > 0:
+            break
+        time.sleep(1)
+    else:
+        raise AssertionError("Email not found")

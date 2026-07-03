@@ -1,8 +1,10 @@
 import json
 import threading
 from types import TracebackType
-from typing import Optional, \
-    Type
+from typing import (
+    Optional,
+    Type,
+)
 from kafka import KafkaProducer
 from kafka.producer.future import RecordMetadata
 
@@ -10,7 +12,7 @@ from framework.internal.singleton import Singleton
 
 
 class Producer(Singleton):
-    def __init__(self, bootstrap_servers: list[str]=None):
+    def __init__(self, bootstrap_servers: list[str] = None):
         if bootstrap_servers is None:
             bootstrap_servers = ["185.185.143.231:9092"]
         self._bootstrap_servers = bootstrap_servers
@@ -31,17 +33,21 @@ class Producer(Singleton):
 
     def stop(self) -> None:
         if self._producer:
+            self._producer.flush()
             self._producer.close()
             self._producer = None
 
-    def send(self, topic: str, message: dict[str, str], timeout: float = 60.0) -> RecordMetadata:
+    def send(
+            self, topic: str, message: dict[str, str], headers: dict[str, str] | None = None, timeout: float = 60.0
+    ) -> RecordMetadata:
         if not self._producer:
             raise RuntimeError("Producer is not started")
         try:
             with self._lock:
-                future = self._producer.send(topic, value=message)
+                future = self._producer.send(topic, value=message, headers=headers)
                 # Ожидание подтверждения с указанным таймаутом
                 record_metadata = future.get(timeout=timeout)
+                self._producer.flush()
                 return record_metadata
         except Exception as e:
             raise RuntimeError(f"Failed to send message to Kafka: {e}")
@@ -56,4 +62,3 @@ class Producer(Singleton):
             exc_val: Optional[BaseException],
             exc_tb: Optional[TracebackType], ) -> None:
         self.stop()
-
