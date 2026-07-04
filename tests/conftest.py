@@ -1,3 +1,5 @@
+from typing import Generator
+
 import pytest
 import uuid
 
@@ -5,11 +7,14 @@ from framework.internal.kafka.consumer import Consumer
 from framework.internal.kafka.producer import Producer
 from framework.internal.http.mail import MailApi
 from framework.internal.http.register import AccountApi
+from framework.internal.rmq.publisher import RmqPublisher
 from helpers.kafka.consumer.register_events import (
     RegisterEventsSubscriber,
     RegisterEventsErrorsSubscriber,
 )
 from helpers.mailapi_helper import MailApiHelper
+
+from helpers.rmq.consumer.dm_mail_sending import DmMailSending
 
 
 @pytest.fixture(scope="session")
@@ -103,6 +108,24 @@ def kafka_consumer(
 
 
 @pytest.fixture(scope="session")
-def kafka_producer() -> Producer:
+def kafka_producer() -> Generator[Producer, None, None]:
+    """Фикстура для Kafka Producer."""
     with Producer() as producer:
         yield producer
+
+
+@pytest.fixture(scope="session")
+def rmq_publisher() -> Generator[RmqPublisher, None, None]:
+    """Фикстура для RabbitMQ Publisher."""
+    with RmqPublisher() as publisher:
+        yield publisher
+
+
+@pytest.fixture(scope="session", autouse=True)
+def rmq_dm_mail_sending_consumer() -> Generator[DmMailSending, None, None]:
+    """
+    Фикстура для RabbitMQ Consumer (dm.mail.sending).
+    Автоматически подключается для всех тестов.
+    """
+    with DmMailSending() as consumer:
+        yield consumer
