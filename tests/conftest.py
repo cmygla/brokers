@@ -1,3 +1,4 @@
+import json
 from typing import Generator
 
 import pytest
@@ -34,7 +35,7 @@ def mailapi_helper(mail) -> MailApiHelper:
 
 @pytest.fixture
 def rmq_message():
-    def _rmq_message(login: str = None, password: str = "123123123"):
+    def _rmq_message(login: str = None):
         if login is None:
             login = uuid.uuid4().hex
         address = f"{login}@mail.ru"
@@ -53,7 +54,8 @@ def register_message():
         return {
             "login": login,
             "email": f"{login}@mail.ru",
-            "password": password }
+            "password": password}
+
     return _register_message
 
 
@@ -88,6 +90,7 @@ def register_error_message():
                 "errors": {
                     "Email": ["Invalid"]}},
             "error_type": "unknown"}
+
     return _register_error_message
 
 
@@ -105,15 +108,11 @@ def register_events_errors_subscriber() -> RegisterEventsErrorsSubscriber:
 
 @pytest.fixture(scope="session", autouse=True)
 def kafka_consumer(
-    register_events_subscriber: RegisterEventsSubscriber,
-    register_events_errors_subscriber: RegisterEventsErrorsSubscriber,
-) -> Consumer:
+        register_events_subscriber: RegisterEventsSubscriber,
+        register_events_errors_subscriber: RegisterEventsErrorsSubscriber, ) -> Consumer:
     """Фикстура потребителя Kafka с двумя подписчиками"""
     with Consumer(
-        subscribers=[
-            register_events_subscriber,
-            register_events_errors_subscriber,
-        ]
+            subscribers=[register_events_subscriber, register_events_errors_subscriber, ]
     ) as consumer:
         yield consumer
 

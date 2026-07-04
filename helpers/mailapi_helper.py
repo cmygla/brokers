@@ -74,9 +74,9 @@ class MailApiHelper:
                     break
         return token
 
-    def find_email(self, login: str):
+    def find_email(self, query: str):
         for _ in range(10):
-            response = self.mailapi.find_message(query=login)
+            response = self.mailapi.find_message(query=query)
             if response.json()["total"] > 0:
                 break
             time.sleep(1)
