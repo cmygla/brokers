@@ -33,9 +33,21 @@ def mailapi_helper(mail) -> MailApiHelper:
 
 
 @pytest.fixture
+def rmq_message():
+    def _rmq_message(login: str = None, password: str = "123123123"):
+        if login is None:
+            login = uuid.uuid4().hex
+        address = f"{login}@mail.ru"
+        return {
+                "address": address,
+                "subject": "Published message",
+                "body": "Published message", }
+    return _rmq_message
+
+
+@pytest.fixture
 def register_message():
     def _register_message(login: str = None, password: str = "123123123"):
-        """Фикстура с данными для регистрации"""
         if login is None:
             login = uuid.uuid4().hex
         return {
@@ -61,7 +73,6 @@ def invalid_login_data() -> dict[str, str]:
 @pytest.fixture
 def register_error_message():
     def _register_error_message(login: str = None, password: str = "123123123"):
-        """Фикстура с данными для регистрации"""
         if login is None:
             login = uuid.uuid4().hex
         return {

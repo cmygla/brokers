@@ -46,13 +46,7 @@ def test_success_registration_via_register_events_errors(
     login = message["input_data"]["login"]
 
     kafka_producer.send("register-events-errors", message)
-    for _ in range(10):
-        response = mail.find_message(query=login)
-        if response.json()["total"] > 0:
-            break
-        time.sleep(1)
-    else:
-        raise AssertionError("Email not found")
+    mailapi_helper.find_email(login)
     token = mailapi_helper.get_activation_token_by_login(login=login)
 
     activate_response = account.account_token(token=token)

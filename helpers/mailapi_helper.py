@@ -74,3 +74,11 @@ class MailApiHelper:
                     break
         return token
 
+    def find_email(self, login: str):
+        for _ in range(10):
+            response = self.mailapi.find_message(query=login)
+            if response.json()["total"] > 0:
+                break
+            time.sleep(1)
+        else:
+            raise AssertionError("Email not found")
