@@ -11,9 +11,6 @@ class RegisterEventsSubscriber(Subscriber):
     """Подписчик на события регистрации"""
     topic: str = "register-events"
 
-    def __init__(self):
-        super().__init__()
-
     def find_message(self, login: str, timeout: float = 10.0) -> None:
         """
         Поиск сообщения по логину в течение указанного времени
@@ -36,8 +33,6 @@ class RegisterEventsErrorsSubscriber(Subscriber):
     """Подписчик на топик с ошибками регистрации"""
     topic: str = "register-events-errors"
 
-    def __init__(self):
-        super().__init__()
 
     def find_error_message(
             self, login: str, error_type: str = "validation", timeout: float = 10.0

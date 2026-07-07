@@ -16,7 +16,7 @@ def test_failed_registration(account: AccountApi, mail: MailApi, invalid_login_d
     for _ in range(10):
         response = mail.find_message(query=invalid_login_data["email"])
         if response.json()["total"] > 0:
-            raise AssertionError("Email not found")
+            raise AssertionError("Email is found")
         time.sleep(1)
 
 
@@ -27,9 +27,7 @@ def test_failed_registration_consumer(
         invalid_login_data: dict[str, str]
 ) -> None:
     account.register_user(**invalid_login_data)
-
     register_events_subscriber.find_message(login=invalid_login_data["login"], timeout=10.0)
-
     register_events_errors_subscriber.find_error_message(
         login=invalid_login_data["login"], error_type="validation", timeout=10.0
     )
@@ -46,13 +44,7 @@ def test_success_registration_via_register_events_errors(
     login = message["input_data"]["login"]
 
     kafka_producer.send("register-events-errors", message)
-    for _ in range(10):
-        response = mail.find_message(query=login)
-        if response.json()["total"] > 0:
-            break
-        time.sleep(1)
-    else:
-        raise AssertionError("Email not found")
+    mailapi_helper.find_email(login)
     token = mailapi_helper.get_activation_token_by_login(login=login)
 
     activate_response = account.account_token(token=token)
